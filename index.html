@@ -7,17 +7,53 @@
     <style>
         body {
             font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        /* Стили для меню "Гамбургер" */
+        .menu-icon {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -250px;
+            width: 250px;
+            height: 100%;
+            background: #333;
+            color: #fff;
+            transition: left 0.3s ease;
+            z-index: 999;
+        }
+        .sidebar.open {
+            left: 0;
+        }
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 60px 0 0 0;
+        }
+        .sidebar ul li {
+            padding: 15px;
+            text-align: center;
+        }
+        .sidebar ul li a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 18px;
+        }
+        .content {
             padding: 20px;
+            margin-left: 0;
+            transition: margin-left 0.3s ease;
         }
-        .menu {
-            margin-bottom: 20px;
-        }
-        .menu button {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            margin: 5px 0;
-            font-size: 16px;
+        .content.shift {
+            margin-left: 250px;
         }
         .news {
             background: #f9f9f9;
@@ -28,43 +64,61 @@
     </style>
 </head>
 <body>
-    <div id="app">
+    <!-- Иконка меню "Гамбургер" -->
+    <div class="menu-icon" onclick="toggleMenu()">☰</div>
+
+    <!-- Боковое меню -->
+    <div class="sidebar" id="sidebar">
+        <ul>
+            <li><a href="#" onclick="showSection('schedule')">Расписание</a></li>
+            <li><a href="#" onclick="showSection('students')">Ученики</a></li>
+            <li><a href="#" onclick="showSection('payment')">Оплата</a></li>
+            <li><a href="#" onclick="showSection('reports')">Отчеты</a></li>
+        </ul>
+    </div>
+
+    <!-- Основной контент -->
+    <div class="content" id="content">
         <h1>Дневник репетитора</h1>
         <div class="news">
             <h2>Новости</h2>
             <p>Здесь будут новости о приложении и изменения.</p>
         </div>
-        <div class="menu">
-            <button onclick="showSection('schedule')">Расписание</button>
-            <button onclick="showSection('students')">Ученики</button>
-            <button onclick="showSection('payment')">Оплата</button>
-            <button onclick="showSection('reports')">Отчеты</button>
-        </div>
-        <div id="content">
+        <div id="section-content">
             <!-- Здесь будет отображаться выбранный раздел -->
         </div>
     </div>
 
     <script>
+        // Функция для открытия/закрытия меню
+        function toggleMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('content');
+            sidebar.classList.toggle('open');
+            content.classList.toggle('shift');
+        }
+
         // Отображение выбранного раздела
         function showSection(section) {
-            const content = document.getElementById('content');
+            const sectionContent = document.getElementById('section-content');
             switch (section) {
                 case 'schedule':
-                    content.innerHTML = '<h2>Расписание</h2><p>Здесь будет расписание занятий.</p>';
+                    sectionContent.innerHTML = '<h2>Расписание</h2><p>Здесь будет расписание занятий.</p>';
                     break;
                 case 'students':
-                    content.innerHTML = '<h2>Ученики</h2><p>Здесь будет список учеников.</p>';
+                    sectionContent.innerHTML = '<h2>Ученики</h2><p>Здесь будет список учеников.</p>';
                     break;
                 case 'payment':
-                    content.innerHTML = '<h2>Оплата</h2><p>Здесь будет информация о платежах.</p>';
+                    sectionContent.innerHTML = '<h2>Оплата</h2><p>Здесь будет информация о платежах.</p>';
                     break;
                 case 'reports':
-                    content.innerHTML = '<h2>Отчеты</h2><p>Здесь будут отчеты.</p>';
+                    sectionContent.innerHTML = '<h2>Отчеты</h2><p>Здесь будут отчеты.</p>';
                     break;
                 default:
-                    content.innerHTML = '';
+                    sectionContent.innerHTML = '';
             }
+            // Закрываем меню после выбора раздела
+            toggleMenu();
         }
 
         // По умолчанию показываем раздел "Расписание"
