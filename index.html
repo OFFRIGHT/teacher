@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Дневник репетитора</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .menu {
+            margin-bottom: 20px;
+        }
+        .menu button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            font-size: 16px;
+        }
+        .news {
+            background: #f9f9f9;
+            padding: 15px;
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="access-denied" style="display: none;">
+        <h1>К сожалению, у вас нет доступа.</h1>
+    </div>
+
+    <div id="app" style="display: none;">
+        <h1>Дневник репетитора</h1>
+        <div class="news">
+            <h2>Новости</h2>
+            <p>Здесь будут новости о приложении и изменения.</p>
+        </div>
+        <div class="menu">
+            <button onclick="showSection('schedule')">Расписание</button>
+            <button onclick="showSection('students')">Ученики</button>
+            <button onclick="showSection('payment')">Оплата</button>
+            <button onclick="showSection('reports')">Отчеты</button>
+        </div>
+        <div id="content">
+            <!-- Здесь будет отображаться выбранный раздел -->
+        </div>
+    </div>
+
+    <script>
+        // Проверка доступа
+        function checkAccess() {
+            // Здесь можно добавить логику проверки доступа
+            // Например, проверка по ID пользователя или токену
+            const hasAccess = true; // Временная заглушка
+            if (window.Telegram && Telegram.WebApp) {
+    const user = Telegram.WebApp.initDataUnsafe.user;
+    if (user) {
+        // Проверка доступа по ID пользователя
+        const allowedUsers = [123456789, 987654321]; // Список ID пользователей с доступом
+        if (allowedUsers.includes(user.id)) {
+            document.getElementById('access-denied').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+        } else {
+            document.getElementById('access-denied').style.display = 'block';
+            document.getElementById('app').style.display = 'none';
+        }
+    }
+}
+
+        // Отображение выбранного раздела
+        function showSection(section) {
+            const content = document.getElementById('content');
+            switch (section) {
+                case 'schedule':
+                    content.innerHTML = '<h2>Расписание</h2><p>Здесь будет расписание занятий.</p>';
+                    break;
+                case 'students':
+                    content.innerHTML = '<h2>Ученики</h2><p>Здесь будет список учеников.</p>';
+                    break;
+                case 'payment':
+                    content.innerHTML = '<h2>Оплата</h2><p>Здесь будет информация о платежах.</p>';
+                    break;
+                case 'reports':
+                    content.innerHTML = '<h2>Отчеты</h2><p>Здесь будут отчеты.</p>';
+                    break;
+                default:
+                    content.innerHTML = '';
+            }
+        }
+
+        // Инициализация приложения
+        window.onload = function() {
+            checkAccess();
+        };
+    </script>
+</body>
+</html>
