@@ -62,12 +62,6 @@
         .content.shift {
             margin-left: 250px;
         }
-        .news {
-            background: #f9f9f9;
-            padding: 15px;
-            border: 1px solid #ddd;
-            margin-bottom: 20px;
-        }
         /* Адаптация для мобильных устройств */
         @media (max-width: 768px) {
             .content {
@@ -80,6 +74,43 @@
             .content.shift {
                 margin-left: 200px;
             }
+        }
+        /* Стили для календаря */
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+        }
+        .calendar .day {
+            border: 1px solid #ddd;
+            padding: 10px;
+            min-height: 100px;
+        }
+        .calendar .day .time-slot {
+            margin: 5px 0;
+            padding: 5px;
+            background: #f0f0f0;
+            border-radius: 3px;
+        }
+        /* Стили для форм */
+        .form-container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .form-container input, .form-container select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .form-container button {
+            padding: 10px 20px;
+            background: #333;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
         }
     </style>
     <!-- Иконки FontAwesome -->
@@ -102,16 +133,17 @@
     <!-- Основной контент -->
     <div class="content" id="content">
         <h1>Дневник репетитора</h1>
-        <div class="news">
-            <h2>Новости</h2>
-            <p>Здесь будут новости о приложении и изменения.</p>
-        </div>
         <div id="section-content">
             <!-- Здесь будет отображаться выбранный раздел -->
         </div>
     </div>
 
     <script>
+        // Данные приложения
+        let students = JSON.parse(localStorage.getItem('students')) || [];
+        let schedule = JSON.parse(localStorage.getItem('schedule')) || {};
+        let payments = JSON.parse(localStorage.getItem('payments')) || [];
+
         // Функция для открытия/закрытия меню
         function toggleMenu() {
             const sidebar = document.getElementById('sidebar');
@@ -125,22 +157,89 @@
             const sectionContent = document.getElementById('section-content');
             switch (section) {
                 case 'schedule':
-                    sectionContent.innerHTML = '<h2>Расписание</h2><p>Здесь будет расписание занятий.</p>';
+                    renderSchedule();
                     break;
                 case 'students':
-                    sectionContent.innerHTML = '<h2>Ученики</h2><p>Здесь будет список учеников.</p>';
+                    renderStudents();
                     break;
                 case 'payment':
-                    sectionContent.innerHTML = '<h2>Оплата</h2><p>Здесь будет информация о платежах.</p>';
+                    renderPayments();
                     break;
                 case 'reports':
-                    sectionContent.innerHTML = '<h2>Отчеты</h2><p>Здесь будут отчеты.</p>';
+                    renderReports();
                     break;
                 default:
                     sectionContent.innerHTML = '';
             }
             // Закрываем меню после выбора раздела
             toggleMenu();
+        }
+
+        // Рендер расписания
+        function renderSchedule() {
+            const sectionContent = document.getElementById('section-content');
+            let html = '<h2>Расписание</h2>';
+            html += '<div class="calendar">';
+            const days = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС'];
+            days.forEach(day => {
+                html += `<div class="day"><h3>${day}</h3>`;
+                for (let hour = 8; hour <= 23; hour++) {
+                    const timeSlot = schedule[`${day}-${hour}`] || [];
+                    html += `<div class="time-slot">${hour}:00 - ${timeSlot.map(s => `<span style="color: ${s.color}">${s.name}</span>`).join(', ')}</div>`;
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+            sectionContent.innerHTML = html;
+        }
+
+        // Рендер учеников
+        function renderStudents() {
+            const sectionContent = document.getElementById('section-content');
+            let html = '<h2>Ученики</h2>';
+            html += '<button onclick="showAddStudentForm()">Добавить ученика</button>';
+            html += '<div id="students-list">';
+            students.forEach((student, index) => {
+                html += `<div>
+                    <h3>${student.name}</h3>
+                    <p>Стоимость: ${student.price} руб.</p>
+                    <p>Цвет: <span style="color: ${student.color}">${student.color}</span></p>
+                    <button onclick="editStudent(${index})">Редактировать</button>
+                    <button onclick="deleteStudent(${index})">Удалить</button>
+                </div>`;
+            });
+            html += '</div>';
+            sectionContent.innerHTML = html;
+        }
+
+        // Рендер оплат
+        function renderPayments() {
+            const sectionContent = document.getElementById('section-content');
+            let html = '<h2>Оплата</h2>';
+            html += '<div id="payments-list">';
+            payments.forEach((payment, index) => {
+                html += `<div>
+                    <h3>${payment.student}</h3>
+                    <p>Дата: ${payment.date}</p>
+                    <p>Статус: ${payment.paid ? 'Оплачено' : 'Не оплачено'}</p>
+                    <button onclick="togglePaymentStatus(${index})">Изменить статус</button>
+                </div>`;
+            });
+            html += '</div>';
+            sectionContent.innerHTML = html;
+        }
+
+        // Рендер отчетов
+        function renderReports() {
+            const sectionContent = document.getElementById('section-content');
+            let html = '<h2>Отчеты</h2>';
+            html += '<div id="reports-list">';
+            // Пример отчета
+            html += '<h3>Общая статистика</h3>';
+            html += `<p>Всего учеников: ${students.length}</p>`;
+            html += `<p>Оплаченных занятий: ${payments.filter(p => p.paid).length}</p>`;
+            html += '</div>';
+            sectionContent.innerHTML = html;
         }
 
         // По умолчанию показываем раздел "Расписание"
