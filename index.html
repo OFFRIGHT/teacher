@@ -28,11 +28,7 @@
     </style>
 </head>
 <body>
-    <div id="access-denied" style="display: none;">
-        <h1>К сожалению, у вас нет доступа.</h1>
-    </div>
-
-    <div id="app" style="display: none;">
+    <div id="app">
         <h1>Дневник репетитора</h1>
         <div class="news">
             <h2>Новости</h2>
@@ -50,26 +46,6 @@
     </div>
 
     <script>
-        // Проверка доступа
-        function checkAccess() {
-            // Здесь можно добавить логику проверки доступа
-            // Например, проверка по ID пользователя или токену
-            const hasAccess = true; // Временная заглушка
-            if (window.Telegram && Telegram.WebApp) {
-    const user = Telegram.WebApp.initDataUnsafe.user;
-    if (user) {
-        // Проверка доступа по ID пользователя
-        const allowedUsers = [493116386, 987654321]; // Список ID пользователей с доступом
-        if (allowedUsers.includes(user.id)) {
-            document.getElementById('access-denied').style.display = 'none';
-            document.getElementById('app').style.display = 'block';
-        } else {
-            document.getElementById('access-denied').style.display = 'block';
-            document.getElementById('app').style.display = 'none';
-        }
-    }
-}
-
         // Отображение выбранного раздела
         function showSection(section) {
             const content = document.getElementById('content');
@@ -91,9 +67,9 @@
             }
         }
 
-        // Инициализация приложения
+        // По умолчанию показываем раздел "Расписание"
         window.onload = function() {
-            checkAccess();
+            showSection('schedule');
         };
     </script>
 </body>
