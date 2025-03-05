@@ -35,27 +35,31 @@
             margin-right: 60px;
             padding: 20px;
         }
-        /* Стили для календаря */
-        .calendar {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 10px;
+        /* Стили для таблицы */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
         }
-        .calendar .day {
+        .table th, .table td {
             border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        .table th {
+            background-color: #f2f2f2;
+        }
+        .table tr:hover {
+            background-color: #f5f5f5;
+        }
+        /* Стили для поиска и фильтрации */
+        .search-filter {
+            margin-bottom: 20px;
+        }
+        .search-filter input {
             padding: 10px;
-            min-height: 100px;
-            background: #f9f9f9;
-        }
-        .calendar .day .time-slot {
-            margin: 5px 0;
-            padding: 5px;
-            background: #fff;
-            border-radius: 3px;
+            margin-right: 10px;
             border: 1px solid #ddd;
-        }
-        .calendar .day .time-slot.free {
-            background: #e0f7fa;
+            border-radius: 5px;
         }
         /* Стили для учеников */
         .students-list {
@@ -74,43 +78,6 @@
         }
         .student-card p {
             margin: 5px 0;
-        }
-        /* Стили для форм */
-        .form-container {
-            max-width: 400px;
-            margin: 0 auto;
-        }
-        .form-container input, .form-container select, .form-container button {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        .form-container button {
-            background: #333;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-        }
-        .form-container .time-slot {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        .form-container .time-slot button {
-            width: auto;
-            padding: 5px 10px;
-        }
-        /* Поиск и сортировка */
-        .search-sort {
-            margin-bottom: 20px;
-        }
-        .search-sort input, .search-sort select {
-            padding: 10px;
-            margin-right: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
         }
     </style>
     <!-- Иконки FontAwesome -->
@@ -163,77 +130,35 @@
         function renderSchedule() {
             const sectionContent = document.getElementById('section-content');
             let html = '<h2>Расписание</h2>';
-            html += '<div class="search-sort"><input type="text" id="search" placeholder="Поиск по имени" oninput="filterSchedule()"><select id="sort" onchange="filterSchedule()"><option value="day">Сортировка по дню</option><option value="time">Сортировка по времени</option><option value="student">Сортировка по ученику</option></select></div>';
-            html += '<div class="calendar">';
-            const days = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС'];
-            days.forEach(day => {
-                html += `<div class="day"><h3>${day}</h3>`;
-                for (let hour = 8; hour <= 23; hour++) {
-                    const timeSlot = schedule[`${day}-${hour}`] || [];
-                    const isFree = timeSlot.length === 0;
-                    html += `<div class="time-slot ${isFree ? 'free' : ''}">${hour}:00 - ${timeSlot.map(s => `<span style="color: ${s.color}">${s.name}</span>`).join(', ')}</div>`;
-                }
-                html += '</div>';
-            });
-            html += '</div>';
+            html += '<div class="search-filter"><input type="text" id="search" placeholder="Поиск по имени" oninput="filterSchedule()"></div>';
+            html += '<table class="table"><thead><tr><th>День</th><th>Время</th><th>Ученик</th></tr></thead><tbody id="schedule-body"></tbody></table>';
             sectionContent.innerHTML = html;
+            updateScheduleTable();
         }
 
-        // Фильтрация и сортировка расписания
-        function filterSchedule() {
+        // Обновление таблицы расписания
+        function updateScheduleTable() {
+            const scheduleBody = document.getElementById('schedule-body');
             const search = document.getElementById('search').value.toLowerCase();
-            const sort = document.getElementById('sort').value;
             const days = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС'];
-            let filteredSchedule = {};
+            let html = '';
 
             days.forEach(day => {
                 for (let hour = 8; hour <= 23; hour++) {
                     const key = `${day}-${hour}`;
                     const timeSlot = schedule[key] || [];
                     if (timeSlot.some(s => s.name.toLowerCase().includes(search))) {
-                        filteredSchedule[key] = timeSlot;
+                        html += `<tr><td>${day}</td><td>${hour}:00</td><td>${timeSlot.map(s => `<span style="color: ${s.color}">${s.name}</span>`).join(', ')}</td></tr>`;
                     }
                 }
             });
 
-            if (sort === 'time') {
-                // Сортировка по времени
-                const sortedKeys = Object.keys(filteredSchedule).sort((a, b) => {
-                    const [dayA, hourA] = a.split('-');
-                    const [dayB, hourB] = b.split('-');
-                    return hourA - hourB;
-                });
-                filteredSchedule = sortedKeys.reduce((acc, key) => {
-                    acc[key] = filteredSchedule[key];
-                    return acc;
-                }, {});
-            } else if (sort === 'student') {
-                // Сортировка по ученику
-                const sortedKeys = Object.keys(filteredSchedule).sort((a, b) => {
-                    const nameA = filteredSchedule[a][0]?.name || '';
-                    const nameB = filteredSchedule[b][0]?.name || '';
-                    return nameA.localeCompare(nameB);
-                });
-                filteredSchedule = sortedKeys.reduce((acc, key) => {
-                    acc[key] = filteredSchedule[key];
-                    return acc;
-                }, {});
-            }
+            scheduleBody.innerHTML = html;
+        }
 
-            // Обновляем отображение
-            const calendar = document.querySelector('.calendar');
-            calendar.innerHTML = '';
-            days.forEach(day => {
-                let dayHtml = `<div class="day"><h3>${day}</h3>`;
-                for (let hour = 8; hour <= 23; hour++) {
-                    const key = `${day}-${hour}`;
-                    const timeSlot = filteredSchedule[key] || [];
-                    const isFree = timeSlot.length === 0;
-                    dayHtml += `<div class="time-slot ${isFree ? 'free' : ''}">${hour}:00 - ${timeSlot.map(s => `<span style="color: ${s.color}">${s.name}</span>`).join(', ')}</div>`;
-                }
-                dayHtml += '</div>';
-                calendar.innerHTML += dayHtml;
-            });
+        // Фильтрация расписания
+        function filterSchedule() {
+            updateScheduleTable();
         }
 
         // Рендер учеников
