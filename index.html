@@ -9,71 +9,31 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            overflow-x: hidden;
-        }
-        /* Стили для меню "Гамбургер" */
-        .menu-icon {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            font-size: 24px;
-            cursor: pointer;
-            z-index: 1000;
+            background: #fff;
             color: #333;
         }
+        /* Стили для меню */
         .sidebar {
             position: fixed;
             top: 0;
-            left: -250px;
-            width: 250px;
+            right: 0;
+            width: 60px;
             height: 100%;
             background: #333;
-            color: #fff;
-            transition: left 0.3s ease;
-            z-index: 999;
-        }
-        .sidebar.open {
-            left: 0;
-        }
-        .sidebar ul {
-            list-style: none;
-            padding: 0;
-            margin: 60px 0 0 0;
-        }
-        .sidebar ul li {
-            padding: 15px;
-            text-align: left;
-        }
-        .sidebar ul li a {
-            color: #fff;
-            text-decoration: none;
-            font-size: 18px;
             display: flex;
+            flex-direction: column;
             align-items: center;
+            padding-top: 20px;
         }
-        .sidebar ul li a i {
-            margin-right: 10px;
+        .sidebar i {
+            color: #fff;
+            font-size: 24px;
+            margin: 15px 0;
+            cursor: pointer;
         }
         .content {
+            margin-right: 60px;
             padding: 20px;
-            margin-left: 0;
-            transition: margin-left 0.3s ease;
-        }
-        .content.shift {
-            margin-left: 250px;
-        }
-        /* Адаптация для мобильных устройств */
-        @media (max-width: 768px) {
-            .content {
-                padding: 10px;
-            }
-            .sidebar {
-                width: 200px;
-                left: -200px;
-            }
-            .content.shift {
-                margin-left: 200px;
-            }
         }
         /* Стили для календаря */
         .calendar {
@@ -85,12 +45,35 @@
             border: 1px solid #ddd;
             padding: 10px;
             min-height: 100px;
+            background: #f9f9f9;
         }
         .calendar .day .time-slot {
             margin: 5px 0;
             padding: 5px;
-            background: #f0f0f0;
+            background: #fff;
             border-radius: 3px;
+            border: 1px solid #ddd;
+        }
+        .calendar .day .time-slot.free {
+            background: #e0f7fa;
+        }
+        /* Стили для учеников */
+        .students-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .student-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        .student-card h3 {
+            margin: 0 0 10px 0;
+        }
+        .student-card p {
+            margin: 5px 0;
         }
         /* Стили для форм */
         .form-container {
@@ -119,22 +102,27 @@
             width: auto;
             padding: 5px 10px;
         }
+        /* Поиск и сортировка */
+        .search-sort {
+            margin-bottom: 20px;
+        }
+        .search-sort input, .search-sort select {
+            padding: 10px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
     </style>
     <!-- Иконки FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <!-- Иконка меню "Гамбургер" -->
-    <div class="menu-icon" onclick="toggleMenu()">☰</div>
-
     <!-- Боковое меню -->
-    <div class="sidebar" id="sidebar">
-        <ul>
-            <li><a href="#" onclick="showSection('schedule')"><i class="fas fa-calendar-alt"></i>Расписание</a></li>
-            <li><a href="#" onclick="showSection('students')"><i class="fas fa-users"></i>Ученики</a></li>
-            <li><a href="#" onclick="showSection('payment')"><i class="fas fa-money-bill-wave"></i>Оплата</a></li>
-            <li><a href="#" onclick="showSection('reports')"><i class="fas fa-chart-line"></i>Отчеты</a></li>
-        </ul>
+    <div class="sidebar">
+        <i class="fas fa-calendar-alt" onclick="showSection('schedule')"></i>
+        <i class="fas fa-users" onclick="showSection('students')"></i>
+        <i class="fas fa-money-bill-wave" onclick="showSection('payment')"></i>
+        <i class="fas fa-chart-line" onclick="showSection('reports')"></i>
     </div>
 
     <!-- Основной контент -->
@@ -149,17 +137,8 @@
         // Данные приложения
         let students = JSON.parse(localStorage.getItem('students')) || [];
         let schedule = JSON.parse(localStorage.getItem('schedule')) || {};
-        let payments = JSON.parse(localStorage.getItem('payments')) || [];
 
-        // Функция для открытия/закрытия меню
-        function toggleMenu() {
-            const sidebar = document.getElementById('sidebar');
-            const content = document.getElementById('content');
-            sidebar.classList.toggle('open');
-            content.classList.toggle('shift');
-        }
-
-        // Отображение выбранного раздела
+        // Функция для отображения выбранного раздела
         function showSection(section) {
             const sectionContent = document.getElementById('section-content');
             switch (section) {
@@ -178,21 +157,21 @@
                 default:
                     sectionContent.innerHTML = '';
             }
-            // Закрываем меню после выбора раздела
-            toggleMenu();
         }
 
         // Рендер расписания
         function renderSchedule() {
             const sectionContent = document.getElementById('section-content');
             let html = '<h2>Расписание</h2>';
+            html += '<div class="search-sort"><input type="text" id="search" placeholder="Поиск по имени" oninput="filterSchedule()"><select id="sort" onchange="filterSchedule()"><option value="day">Сортировка по дню</option><option value="time">Сортировка по времени</option><option value="student">Сортировка по ученику</option></select></div>';
             html += '<div class="calendar">';
             const days = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС'];
             days.forEach(day => {
                 html += `<div class="day"><h3>${day}</h3>`;
                 for (let hour = 8; hour <= 23; hour++) {
                     const timeSlot = schedule[`${day}-${hour}`] || [];
-                    html += `<div class="time-slot">${hour}:00 - ${timeSlot.map(s => `<span style="color: ${s.color}">${s.name}</span>`).join(', ')}</div>`;
+                    const isFree = timeSlot.length === 0;
+                    html += `<div class="time-slot ${isFree ? 'free' : ''}">${hour}:00 - ${timeSlot.map(s => `<span style="color: ${s.color}">${s.name}</span>`).join(', ')}</div>`;
                 }
                 html += '</div>';
             });
@@ -200,19 +179,77 @@
             sectionContent.innerHTML = html;
         }
 
+        // Фильтрация и сортировка расписания
+        function filterSchedule() {
+            const search = document.getElementById('search').value.toLowerCase();
+            const sort = document.getElementById('sort').value;
+            const days = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС'];
+            let filteredSchedule = {};
+
+            days.forEach(day => {
+                for (let hour = 8; hour <= 23; hour++) {
+                    const key = `${day}-${hour}`;
+                    const timeSlot = schedule[key] || [];
+                    if (timeSlot.some(s => s.name.toLowerCase().includes(search))) {
+                        filteredSchedule[key] = timeSlot;
+                    }
+                }
+            });
+
+            if (sort === 'time') {
+                // Сортировка по времени
+                const sortedKeys = Object.keys(filteredSchedule).sort((a, b) => {
+                    const [dayA, hourA] = a.split('-');
+                    const [dayB, hourB] = b.split('-');
+                    return hourA - hourB;
+                });
+                filteredSchedule = sortedKeys.reduce((acc, key) => {
+                    acc[key] = filteredSchedule[key];
+                    return acc;
+                }, {});
+            } else if (sort === 'student') {
+                // Сортировка по ученику
+                const sortedKeys = Object.keys(filteredSchedule).sort((a, b) => {
+                    const nameA = filteredSchedule[a][0]?.name || '';
+                    const nameB = filteredSchedule[b][0]?.name || '';
+                    return nameA.localeCompare(nameB);
+                });
+                filteredSchedule = sortedKeys.reduce((acc, key) => {
+                    acc[key] = filteredSchedule[key];
+                    return acc;
+                }, {});
+            }
+
+            // Обновляем отображение
+            const calendar = document.querySelector('.calendar');
+            calendar.innerHTML = '';
+            days.forEach(day => {
+                let dayHtml = `<div class="day"><h3>${day}</h3>`;
+                for (let hour = 8; hour <= 23; hour++) {
+                    const key = `${day}-${hour}`;
+                    const timeSlot = filteredSchedule[key] || [];
+                    const isFree = timeSlot.length === 0;
+                    dayHtml += `<div class="time-slot ${isFree ? 'free' : ''}">${hour}:00 - ${timeSlot.map(s => `<span style="color: ${s.color}">${s.name}</span>`).join(', ')}</div>`;
+                }
+                dayHtml += '</div>';
+                calendar.innerHTML += dayHtml;
+            });
+        }
+
         // Рендер учеников
         function renderStudents() {
             const sectionContent = document.getElementById('section-content');
             let html = '<h2>Ученики</h2>';
             html += '<button onclick="showAddStudentForm()">Добавить ученика</button>';
-            html += '<div id="students-list">';
+            html += '<div class="students-list">';
             students.forEach((student, index) => {
-                html += `<div>
+                html += `<div class="student-card">
                     <h3>${student.name}</h3>
                     <p>Предмет: ${student.subject}</p>
                     <p>Класс: ${student.grade}</p>
                     <p>Стоимость: ${student.price} руб.</p>
                     <p>Цвет: <span style="color: ${student.color}">${student.color}</span></p>
+                    <p>Дни занятий: ${student.timeSlots.map(slot => `${slot.day} ${slot.hour}:00`).join(', ')}</p>
                     <button onclick="editStudent(${index})">Редактировать</button>
                     <button onclick="deleteStudent(${index})">Удалить</button>
                 </div>`;
@@ -243,7 +280,11 @@
             const timeSlots = document.getElementById('time-slots');
             let html = '<div class="time-slot">';
             html += '<select><option value="ПН">ПН</option><option value="ВТ">ВТ</option><option value="СР">СР</option><option value="ЧТ">ЧТ</option><option value="ПТ">ПТ</option><option value="СБ">СБ</option><option value="ВС">ВС</option></select>';
-            html += '<input type="number" min="8" max="23" placeholder="Час">';
+            html += '<select>';
+            for (let hour = 8; hour <= 23; hour++) {
+                html += `<option value="${hour}">${hour}:00</option>`;
+            }
+            html += '</select>';
             html += '<button onclick="removeTimeSlot(this)">Удалить</button>';
             html += '</div>';
             timeSlots.innerHTML += html;
@@ -263,7 +304,7 @@
             const color = document.getElementById('student-color').value;
             const timeSlots = Array.from(document.querySelectorAll('.time-slot')).map(slot => ({
                 day: slot.querySelector('select').value,
-                hour: slot.querySelector('input').value
+                hour: slot.querySelectorAll('select')[1].value
             }));
 
             const student = { name, subject, grade, price, color, timeSlots };
@@ -303,7 +344,11 @@
             student.timeSlots.forEach(slot => {
                 let html = '<div class="time-slot">';
                 html += `<select><option value="ПН" ${slot.day === 'ПН' ? 'selected' : ''}>ПН</option><option value="ВТ" ${slot.day === 'ВТ' ? 'selected' : ''}>ВТ</option><option value="СР" ${slot.day === 'СР' ? 'selected' : ''}>СР</option><option value="ЧТ" ${slot.day === 'ЧТ' ? 'selected' : ''}>ЧТ</option><option value="ПТ" ${slot.day === 'ПТ' ? 'selected' : ''}>ПТ</option><option value="СБ" ${slot.day === 'СБ' ? 'selected' : ''}>СБ</option><option value="ВС" ${slot.day === 'ВС' ? 'selected' : ''}>ВС</option></select>`;
-                html += `<input type="number" min="8" max="23" value="${slot.hour}">`;
+                html += '<select>';
+                for (let hour = 8; hour <= 23; hour++) {
+                    html += `<option value="${hour}" ${slot.hour == hour ? 'selected' : ''}>${hour}:00</option>`;
+                }
+                html += '</select>';
                 html += '<button onclick="removeTimeSlot(this)">Удалить</button>';
                 html += '</div>';
                 timeSlots.innerHTML += html;
@@ -319,7 +364,7 @@
             const color = document.getElementById('student-color').value;
             const timeSlots = Array.from(document.querySelectorAll('.time-slot')).map(slot => ({
                 day: slot.querySelector('select').value,
-                hour: slot.querySelector('input').value
+                hour: slot.querySelectorAll('select')[1].value
             }));
 
             const student = { name, subject, grade, price, color, timeSlots };
