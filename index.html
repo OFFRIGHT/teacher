@@ -35,21 +35,44 @@
             margin-right: 60px;
             padding: 20px;
         }
-        /* Стили для таблицы */
-        .table {
-            width: 100%;
-            border-collapse: collapse;
+        /* Стили для расписания */
+        .schedule {
+            display: grid;
+            grid-template-columns: 100px repeat(7, 1fr);
+            gap: 5px;
         }
-        .table th, .table td {
+        .schedule .time-column {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .schedule .time-slot {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f9f9f9;
             border: 1px solid #ddd;
-            padding: 8px;
+            border-radius: 3px;
+        }
+        .schedule .day-header {
             text-align: center;
+            padding: 10px;
+            background: #f2f2f2;
+            border: 1px solid #ddd;
+            border-radius: 3px;
         }
-        .table th {
-            background-color: #f2f2f2;
+        .schedule .day-header .date {
+            font-size: 12px;
+            color: #666;
         }
-        .table tr:hover {
-            background-color: #f5f5f5;
+        .schedule .event {
+            background: #e0f7fa;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            padding: 5px;
+            text-align: center;
+            cursor: pointer;
         }
         /* Стили для поиска и фильтрации */
         .search-filter {
@@ -60,24 +83,6 @@
             margin-right: 10px;
             border: 1px solid #ddd;
             border-radius: 5px;
-        }
-        /* Стили для учеников */
-        .students-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 20px;
-        }
-        .student-card {
-            border: 1px solid #ddd;
-            padding: 15px;
-            background: #f9f9f9;
-            border-radius: 5px;
-        }
-        .student-card h3 {
-            margin: 0 0 10px 0;
-        }
-        .student-card p {
-            margin: 5px 0;
         }
     </style>
     <!-- Иконки FontAwesome -->
@@ -131,197 +136,67 @@
             const sectionContent = document.getElementById('section-content');
             let html = '<h2>Расписание</h2>';
             html += '<div class="search-filter"><input type="text" id="search" placeholder="Поиск по имени" oninput="filterSchedule()"></div>';
-            html += '<table class="table"><thead><tr><th>День</th><th>Время</th><th>Ученик</th></tr></thead><tbody id="schedule-body"></tbody></table>';
-            sectionContent.innerHTML = html;
-            updateScheduleTable();
-        }
-
-        // Обновление таблицы расписания
-        function updateScheduleTable() {
-            const scheduleBody = document.getElementById('schedule-body');
-            const search = document.getElementById('search').value.toLowerCase();
+            html += '<div class="schedule"><div class="time-column">';
+            for (let hour = 8; hour <= 23; hour++) {
+                html += `<div class="time-slot">${hour}:00</div>`;
+            }
+            html += '</div>';
             const days = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС'];
-            let html = '';
-
-            days.forEach(day => {
+            const dates = getCurrentWeekDates();
+            days.forEach((day, index) => {
+                html += `<div class="day-column"><div class="day-header">${day}<div class="date">${dates[index].getDate()} ${getMonthName(dates[index])}</div></div>`;
                 for (let hour = 8; hour <= 23; hour++) {
                     const key = `${day}-${hour}`;
                     const timeSlot = schedule[key] || [];
-                    if (timeSlot.some(s => s.name.toLowerCase().includes(search))) {
-                        html += `<tr><td>${day}</td><td>${hour}:00</td><td>${timeSlot.map(s => `<span style="color: ${s.color}">${s.name}</span>`).join(', ')}</td></tr>`;
-                    }
+                    html += `<div class="event" data-day="${day}" data-hour="${hour}" draggable="true" ondragstart="drag(event)">${timeSlot.map(s => `<span style="color: ${s.color}">${s.name}</span>`).join(', ')}</div>`;
                 }
+                html += '</div>';
             });
+            html += '</div>';
+            sectionContent.innerHTML = html;
+        }
 
-            scheduleBody.innerHTML = html;
+        // Получение дат текущей недели
+        function getCurrentWeekDates() {
+            const now = new Date();
+            const currentDay = now.getDay();
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() - currentDay + (currentDay === 0 ? -6 : 1)); // Начало недели - понедельник
+            const dates = [];
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(startOfWeek);
+                date.setDate(startOfWeek.getDate() + i);
+                dates.push(date);
+            }
+            return dates;
+        }
+
+        // Получение названия месяца
+        function getMonthName(date) {
+            const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+            return months[date.getMonth()];
         }
 
         // Фильтрация расписания
         function filterSchedule() {
-            updateScheduleTable();
-        }
-
-        // Рендер учеников
-        function renderStudents() {
-            const sectionContent = document.getElementById('section-content');
-            let html = '<h2>Ученики</h2>';
-            html += '<button onclick="showAddStudentForm()">Добавить ученика</button>';
-            html += '<div class="students-list">';
-            students.forEach((student, index) => {
-                html += `<div class="student-card">
-                    <h3>${student.name}</h3>
-                    <p>Предмет: ${student.subject}</p>
-                    <p>Класс: ${student.grade}</p>
-                    <p>Стоимость: ${student.price} руб.</p>
-                    <p>Цвет: <span style="color: ${student.color}">${student.color}</span></p>
-                    <p>Дни занятий: ${student.timeSlots.map(slot => `${slot.day} ${slot.hour}:00`).join(', ')}</p>
-                    <button onclick="editStudent(${index})">Редактировать</button>
-                    <button onclick="deleteStudent(${index})">Удалить</button>
-                </div>`;
-            });
-            html += '</div>';
-            sectionContent.innerHTML = html;
-        }
-
-        // Форма добавления ученика
-        function showAddStudentForm() {
-            const sectionContent = document.getElementById('section-content');
-            let html = '<h2>Добавить ученика</h2>';
-            html += '<div class="form-container">';
-            html += '<input type="text" id="student-name" placeholder="ФИО">';
-            html += '<select id="student-subject"><option value="Русский">Русский</option><option value="Английский">Английский</option></select>';
-            html += '<input type="number" id="student-grade" placeholder="Класс">';
-            html += '<input type="number" id="student-price" placeholder="Стоимость занятия">';
-            html += '<input type="color" id="student-color" value="#ff0000">';
-            html += '<div id="time-slots"></div>';
-            html += '<button onclick="addTimeSlot()">Добавить время</button>';
-            html += '<button onclick="saveStudent()">Сохранить</button>';
-            html += '</div>';
-            sectionContent.innerHTML = html;
-        }
-
-        // Добавление временного слота
-        function addTimeSlot() {
-            const timeSlots = document.getElementById('time-slots');
-            let html = '<div class="time-slot">';
-            html += '<select><option value="ПН">ПН</option><option value="ВТ">ВТ</option><option value="СР">СР</option><option value="ЧТ">ЧТ</option><option value="ПТ">ПТ</option><option value="СБ">СБ</option><option value="ВС">ВС</option></select>';
-            html += '<select>';
-            for (let hour = 8; hour <= 23; hour++) {
-                html += `<option value="${hour}">${hour}:00</option>`;
-            }
-            html += '</select>';
-            html += '<button onclick="removeTimeSlot(this)">Удалить</button>';
-            html += '</div>';
-            timeSlots.innerHTML += html;
-        }
-
-        // Удаление временного слота
-        function removeTimeSlot(button) {
-            button.parentElement.remove();
-        }
-
-        // Сохранение ученика
-        function saveStudent() {
-            const name = document.getElementById('student-name').value;
-            const subject = document.getElementById('student-subject').value;
-            const grade = document.getElementById('student-grade').value;
-            const price = document.getElementById('student-price').value;
-            const color = document.getElementById('student-color').value;
-            const timeSlots = Array.from(document.querySelectorAll('.time-slot')).map(slot => ({
-                day: slot.querySelector('select').value,
-                hour: slot.querySelectorAll('select')[1].value
-            }));
-
-            const student = { name, subject, grade, price, color, timeSlots };
-            students.push(student);
-            localStorage.setItem('students', JSON.stringify(students));
-
-            // Обновляем расписание
-            timeSlots.forEach(slot => {
-                const key = `${slot.day}-${slot.hour}`;
-                if (!schedule[key]) schedule[key] = [];
-                schedule[key].push({ name, color });
-            });
-            localStorage.setItem('schedule', JSON.stringify(schedule));
-
-            renderStudents();
-        }
-
-        // Редактирование ученика
-        function editStudent(index) {
-            const student = students[index];
-            const sectionContent = document.getElementById('section-content');
-            let html = '<h2>Редактировать ученика</h2>';
-            html += '<div class="form-container">';
-            html += `<input type="text" id="student-name" value="${student.name}">`;
-            html += `<select id="student-subject"><option value="Русский" ${student.subject === 'Русский' ? 'selected' : ''}>Русский</option><option value="Английский" ${student.subject === 'Английский' ? 'selected' : ''}>Английский</option></select>`;
-            html += `<input type="number" id="student-grade" value="${student.grade}">`;
-            html += `<input type="number" id="student-price" value="${student.price}">`;
-            html += `<input type="color" id="student-color" value="${student.color}">`;
-            html += '<div id="time-slots"></div>';
-            html += '<button onclick="addTimeSlot()">Добавить время</button>';
-            html += `<button onclick="updateStudent(${index})">Сохранить</button>`;
-            html += '</div>';
-            sectionContent.innerHTML = html;
-
-            // Заполняем временные слоты
-            const timeSlots = document.getElementById('time-slots');
-            student.timeSlots.forEach(slot => {
-                let html = '<div class="time-slot">';
-                html += `<select><option value="ПН" ${slot.day === 'ПН' ? 'selected' : ''}>ПН</option><option value="ВТ" ${slot.day === 'ВТ' ? 'selected' : ''}>ВТ</option><option value="СР" ${slot.day === 'СР' ? 'selected' : ''}>СР</option><option value="ЧТ" ${slot.day === 'ЧТ' ? 'selected' : ''}>ЧТ</option><option value="ПТ" ${slot.day === 'ПТ' ? 'selected' : ''}>ПТ</option><option value="СБ" ${slot.day === 'СБ' ? 'selected' : ''}>СБ</option><option value="ВС" ${slot.day === 'ВС' ? 'selected' : ''}>ВС</option></select>`;
-                html += '<select>';
-                for (let hour = 8; hour <= 23; hour++) {
-                    html += `<option value="${hour}" ${slot.hour == hour ? 'selected' : ''}>${hour}:00</option>`;
+            const search = document.getElementById('search').value.toLowerCase();
+            const events = document.querySelectorAll('.event');
+            events.forEach(event => {
+                const eventText = event.textContent.toLowerCase();
+                if (eventText.includes(search)) {
+                    event.style.display = 'block';
+                } else {
+                    event.style.display = 'none';
                 }
-                html += '</select>';
-                html += '<button onclick="removeTimeSlot(this)">Удалить</button>';
-                html += '</div>';
-                timeSlots.innerHTML += html;
             });
         }
 
-        // Обновление ученика
-        function updateStudent(index) {
-            const name = document.getElementById('student-name').value;
-            const subject = document.getElementById('student-subject').value;
-            const grade = document.getElementById('student-grade').value;
-            const price = document.getElementById('student-price').value;
-            const color = document.getElementById('student-color').value;
-            const timeSlots = Array.from(document.querySelectorAll('.time-slot')).map(slot => ({
-                day: slot.querySelector('select').value,
-                hour: slot.querySelectorAll('select')[1].value
+        // Перетаскивание событий
+        function drag(event) {
+            event.dataTransfer.setData('text', JSON.stringify({
+                day: event.target.getAttribute('data-day'),
+                hour: event.target.getAttribute('data-hour')
             }));
-
-            const student = { name, subject, grade, price, color, timeSlots };
-            students[index] = student;
-            localStorage.setItem('students', JSON.stringify(students));
-
-            // Обновляем расписание
-            Object.keys(schedule).forEach(key => {
-                schedule[key] = schedule[key].filter(s => s.name !== students[index].name);
-            });
-            timeSlots.forEach(slot => {
-                const key = `${slot.day}-${slot.hour}`;
-                if (!schedule[key]) schedule[key] = [];
-                schedule[key].push({ name, color });
-            });
-            localStorage.setItem('schedule', JSON.stringify(schedule));
-
-            renderStudents();
-        }
-
-        // Удаление ученика
-        function deleteStudent(index) {
-            students.splice(index, 1);
-            localStorage.setItem('students', JSON.stringify(students));
-
-            // Удаляем ученика из расписания
-            Object.keys(schedule).forEach(key => {
-                schedule[key] = schedule[key].filter(s => s.name !== students[index]?.name);
-            });
-            localStorage.setItem('schedule', JSON.stringify(schedule));
-
-            renderStudents();
         }
 
         // По умолчанию показываем раздел "Расписание"
