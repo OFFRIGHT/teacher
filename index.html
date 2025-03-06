@@ -287,6 +287,27 @@
             sectionContent.innerHTML = html;
         }
 
+        // Получение дат текущей недели
+        function getCurrentWeekDates() {
+            const now = new Date();
+            const currentDay = now.getDay();
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() - currentDay + (currentDay === 0 ? -6 : 1)); // Начало недели - понедельник
+            const dates = [];
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(startOfWeek);
+                date.setDate(startOfWeek.getDate() + i);
+                dates.push(date);
+            }
+            return dates;
+        }
+
+        // Получение названия месяца
+        function getMonthName(date) {
+            const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+            return months[date.getMonth()];
+        }
+
         // По умолчанию показываем раздел "Расписание"
         window.onload = function() {
             showSection('schedule');
